@@ -4,11 +4,13 @@ using Hotels.Data;
 using Hotels.Models.Country;
 using AutoMapper;
 using Hotels.Contracts;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Hotels.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class CountriesController : ControllerBase
     {
         private readonly IMapper _mapper;
@@ -100,6 +102,7 @@ namespace Hotels.Controllers
 
         // DELETE: api/Countries/5
         [HttpDelete("{id}")]
+        [Authorize(Roles ="administrator")]
         public async Task<IActionResult> DeleteCountry(int id)
         {
             var country = await _countriesRepository.GetAsync(id);
