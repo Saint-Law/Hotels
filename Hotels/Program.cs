@@ -1,9 +1,12 @@
 using Hotels.Configuration;
 using Hotels.Contracts;
 using Hotels.Data;
+using Hotels.Middleware;
 using Hotels.Repository;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
@@ -37,6 +40,25 @@ builder.Services.AddCors(options =>
         c => c.AllowAnyHeader()
         .AllowAnyOrigin()
         .AllowAnyMethod());
+});
+
+//adding api versioning and configuring it
+builder.Services.AddApiVersioning(options =>
+{
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.DefaultApiVersion = new Microsoft.AspNetCore.Mvc.ApiVersion(1, 0);
+    options.ReportApiVersions = true;
+    options.ApiVersionReader = ApiVersionReader.Combine(
+        new QueryStringApiVersionReader("api-version"),
+        new HeaderApiVersionReader("X-version"),
+        new MediaTypeApiVersionReader("version")
+        );
+});
+
+builder.Services.AddVersionedApiExplorer(options =>
+{
+    options.GroupNameFormat = "'v'VVV";
+    options.SubstituteApiVersionInUrl = true;
 });
 
 //configuring the Serilog
@@ -80,12 +102,14 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseMiddleware<ExceptionMiddleware>();
+
 //adding serilog request logging
 app.UseSerilogRequestLogging();
 
 app.UseHttpsRedirection();
 
-app.UseCors("AllowALl");
+app.UseCors("AllowAll");
 
 app.UseAuthentication();
 app.UseAuthorization();

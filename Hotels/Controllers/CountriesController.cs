@@ -5,6 +5,7 @@ using Hotels.Models.Country;
 using AutoMapper;
 using Hotels.Contracts;
 using Microsoft.AspNetCore.Authorization;
+using Hotels.Exceptions;
 
 namespace Hotels.Controllers
 {
@@ -15,11 +16,13 @@ namespace Hotels.Controllers
     {
         private readonly IMapper _mapper;
         private readonly ICountriesRepository _countriesRepository;
+        public ILogger<CountriesController> _logger;
 
-        public CountriesController(ICountriesRepository countriesRepository, IMapper mapper)
+        public CountriesController(ICountriesRepository countriesRepository, IMapper mapper, ILogger<CountriesController> logger)
         {
             _countriesRepository = countriesRepository;
             _mapper = mapper;
+            _logger = logger;
         }
 
         // GET: api/Countries
@@ -39,7 +42,7 @@ namespace Hotels.Controllers
 
             if (country == null)
             {
-                return NotFound();
+               throw new NotFoundException(nameof(GetCountries), id);
             }
 
             var countryDto = _mapper.Map<CountryDto>(country);
@@ -57,13 +60,11 @@ namespace Hotels.Controllers
                 return BadRequest("Invalid Record Id"); 
             }
 
-            //_context.Entry(country).State = EntityState.Modified;
-
             var country = await _countriesRepository.GetAsync(id);
 
             if (country == null)
             {
-                return NotFound();
+                throw new NotFoundException(nameof(GetCountries), id);
             }
 
             _mapper.Map(updateCountryDto, country);
@@ -106,9 +107,10 @@ namespace Hotels.Controllers
         public async Task<IActionResult> DeleteCountry(int id)
         {
             var country = await _countriesRepository.GetAsync(id);
+
             if (country == null)
             {
-                return NotFound();
+                throw new NotFoundException(nameof(GetCountries), id);
             }
 
             await _countriesRepository.DeleteAsync(id);
